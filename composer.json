@@ -1,6 +1,8 @@
 {
     "name": "abdeslam/event-manager",
-    "description": "A simple event manager",
+    "description": "A powerful event manager that implements psr-14 event-dispatcher, it supports lazy loading, priority dispatching and listener exception handling",
+    "version": "v0.0.1",
+    "keywords": ["event", "manager", "dispatcher", "EventManager", "EventDispatcher", "listener", "psr-14"],
     "autoload": {
         "psr-4": {
             "Abdeslam\\EventManager\\": "src/"
