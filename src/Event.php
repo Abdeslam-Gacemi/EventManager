@@ -1,33 +1,51 @@
 <?php
 
+/**
+ * @author Abdeslam Gacemi <abdobling@gmail.com>
+ */
+
 namespace Abdeslam\EventManager;
 
+use Closure;
+use Throwable;
+use ReflectionClass;
 use Abdeslam\EventManager\Contracts\EventInterface;
 use Abdeslam\EventManager\Contracts\ListenerInterface;
 use Abdeslam\EventManager\Contracts\EventManagerInterface;
 use Abdeslam\EventManager\Exceptions\InvalidEventException;
 use Abdeslam\EventManager\Exceptions\InvalidListenerException;
-use Closure;
-use ReflectionClass;
-use Throwable;
 
 class Event implements EventInterface
 {
-    /** @var EventManagerInterface */
+    /**
+     * @var EventManagerInterface 
+     */
     protected $manager;
 
-    /** @var string */
+    /**
+     * @var string 
+     */
     protected $name;
 
-    /** @var array */
+    /**
+     * @var array 
+     */
     protected $listeners = [];
 
-    /** @var array */
+    /**
+     * @var array 
+     */
     protected $attributes = [];
 
-    /** @var bool */
+    /**
+     * @var bool 
+     */
     protected $propagationStopped = false;
 
+    /**
+     * @inheritDoc
+     * @throws InvalidEventException
+     */
     public function __construct(EventManagerInterface $manager, string $name, array $listeners = [])
     {
         if ($name == '') {
@@ -40,12 +58,18 @@ class Event implements EventInterface
         }
     }
 
+    /**
+     * @inheritDoc
+     * @throws InvalidListenerException
+     */
     public function addListener($listener, int $priority = 0, ?Closure $catcher = null): EventInterface
     {
         if ($listener instanceof ListenerInterface) {
-           $listener->setPriority($priority);
+            $listener->setPriority($priority);
             if ($catcher && method_exists($listener, 'catch')) {
-                /** @var Listener $listener */
+                /**
+                * @var Listener $listener 
+                */
                 $listener->catch($catcher);
             }
             $this->listeners[] = $listener;
@@ -72,91 +96,140 @@ class Event implements EventInterface
         throw new InvalidListenerException("Listener must be either an instance of Abdeslam\EventManager\Contracts\ListenerInterface or a valid callable, $listenerType given");
     }
 
+    /**
+     * @inheritDoc
+     */
     public function hasListeners(): bool
     {
         return (bool) count($this->listeners);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getListeners(): array
     {
         return $this->listeners;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getName(): string
     {
         return $this->name;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getManager(): EventManagerInterface
     {
         return $this->manager;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function setAttribute(string $key, $value): EventInterface
     {
         $this->attributes[$key] = $value;
         return $this;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function setAttributes(array $attributes): EventInterface
     {
         $this->attributes = $attributes;
         return $this;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function hasAttribute(string $key): bool
     {
         return isset($this->attributes[$key]);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getAttribute(string $key): mixed
     {
         return $this->attributes[$key] ?? null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getAttributes(): array
     {
         return $this->attributes;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function removeAttribute(string $key): EventInterface
     {
         unset($this->attributes[$key]);
         return $this;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function isPropagationStopped(): bool
     {
         return $this->propagationStopped;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function setPropagationStopped(bool $flag): EventInterface
     {
         $this->propagationStopped = $flag;
         return $this;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function emit(array $data = []): EventInterface
     {
         $event = $this;
-        $listeners = array_map(function ($listener) {
-            if (is_array($listener)) {
-                $listenerInstance = new $listener['listener']($listener['priority']);
-                if ($listener['catcher'] && method_exists($listenerInstance, 'catch')) {
-                    $listenerInstance->catch($listener['catcher']);
+        $listeners = array_map(
+            function ($listener) {
+                if (is_array($listener)) {
+                    $listenerInstance = new $listener['listener']($listener['priority']);
+                    if ($listener['catcher'] && method_exists($listenerInstance, 'catch')) {
+                        $listenerInstance->catch($listener['catcher']);
+                    }
+                    return $listenerInstance;
                 }
-                return $listenerInstance;
-            }
-            return $listener;
-        }, $this->listeners);
+                return $listener;
+            }, $this->listeners
+        );
 
-        uasort($listeners, function ($listenerA, $listenerB) {
-            /** @var ListenerInterface $listenerA */
-            /** @var ListenerInterface $listenerB */
-            return $listenerB->getPriority() <=> $listenerA->getPriority();
-        });
+        uasort(
+            $listeners, function ($listenerA, $listenerB) {
+                /**
+            * @var ListenerInterface $listenerA 
+            */
+                /**
+            * @var ListenerInterface $listenerB 
+            */
+                return $listenerB->getPriority() <=> $listenerA->getPriority();
+            }
+        );
         foreach ($listeners as $listener) {
-            /** @var ListenerInterface $listener */
+            /** 
+            * @var ListenerInterface $listener 
+            */
             $listenerReturnedValue = $listener->process($event, $data);
             if ($event->isPropagationStopped() || $listenerReturnedValue === false) {
                 break;
@@ -166,6 +239,13 @@ class Event implements EventInterface
         return $event;
     }
 
+    /**
+     * checks if a listener FQCN is valid
+     *
+     * @param string $listener
+     * @return void
+     * @throws InvalidListenerException
+     */
     protected function resolveListenerForLazyLoading(string $listener): void
     {
         try {

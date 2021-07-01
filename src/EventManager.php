@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * @author Abdeslam Gacemi <abdobling@gmail.com>
+ */
+
 namespace Abdeslam\EventManager;
 
 use Abdeslam\EventManager\Contracts\EventInterface;
@@ -10,19 +14,35 @@ use Abdeslam\EventManager\Exceptions\InvalidEventException;
 
 class EventManager implements EventManagerInterface
 {
-    /** @var EventInterface[] */
+    /**
+     * @var EventInterface[] 
+     */
     protected $events = [];
 
-    /** @var bool */
+    /**
+     * @var bool 
+     */
     protected $lazyLoading = false;
 
-    public function __construct(bool $lazyLoading = false, array $events = []) {
+    /**
+     * @param boolean $lazyLoading
+     * @param array $events
+     */
+    public function __construct(bool $lazyLoading = false, array $events = [])
+    {
         $this->lazyLoading = $lazyLoading;
         foreach ($events as $event) {
             $this->addEvent($event, []);
         }
     }
 
+    /**
+     * attaches an event to the manager
+     *
+     * @param EventInterface|string $event
+     * @param array $attributes
+     * @return EventInterface
+     */
     public function addEvent($event, array $attributes = []): EventInterface
     {
         if ($event instanceof EventInterface) {
@@ -38,58 +58,114 @@ class EventManager implements EventManagerInterface
         return $event;
     }
 
-    public function on(string $eventName, ListenerInterface|callable|string $listener, int $priority = 0) {
+    /**
+     * attaches an event with a listener to the manager
+     * 
+     * @param string $eventName
+     * @param ListenerInterface|callable|string $listener
+     * @param int $priority
+     */
+    public function on(string $eventName, ListenerInterface|callable|string $listener, int $priority = 0)
+    {
         $events = $this->resolveEvent($eventName);
         if (!$events) {
             $events = [$this->addEvent($eventName)];
         }
-        /** @var EventInterface[] $events */
+        /**
+         * @var EventInterface[] $events 
+        */
         foreach ($events as $event) {
             $event->addListener($listener, $priority);
         }
         return $this;
     }
 
-    public function getEvent(string $event): EventInterface
+    /**
+     * gets an event by its name
+     *
+     * @param string $event
+     * @return EventInterface
+     * @throws EventNotFoundException
+     */
+    public function getEvent(string $eventName): EventInterface
     {
-        if (!$this->hasEvent($event)) {
-            throw new EventNotFoundException("Event $event not found");
+        if (!$this->hasEvent($eventName)) {
+            throw new EventNotFoundException("Event $eventName not found");
         }
-        return $this->events[$event];
+        return $this->events[$eventName];
     }
 
+    /**
+     * returns the array of events
+     *
+     * @return array
+     */
     public function getEvents(): array
     {
         return $this->events;
     }
 
-    public function hasEvent(string $event): bool
+    /**
+     * checks if the manager has an event by its name
+     *
+     * @param string $event
+     * @return boolean
+     */
+    public function hasEvent(string $eventName): bool
     {
-        return isset($this->events[$event]);
+        return isset($this->events[$eventName]);
     }
 
+    /**
+     * checks if the manager has any events
+     *
+     * @return boolean
+     */
     public function hasEvents(): bool
     {
         return (bool) count($this->events);
     }
 
-    public function removeEvent(string $event): EventManagerInterface
+    /**
+     * removes an event by its name
+     *
+     * @param string $event
+     * @return EventManagerInterface
+     */
+    public function removeEvent(string $eventName): EventManagerInterface
     {
-        unset($this->events[$event]);
+        unset($this->events[$eventName]);
         return $this;
     }
 
+    /**
+     * sets the lazy loading to true or false
+     *
+     * @param boolean $flag
+     * @return EventManagerInterface
+     */
     public function setLazyLoading(bool $flag): EventManagerInterface
     {
         $this->lazyLoading = $flag;
         return $this;
     }
 
+    /**
+     * returns the lazy loading status
+     *
+     * @return boolean
+     */
     public function getLazyLoadingStatus(): bool
     {
         return $this->lazyLoading;
     }
 
+    /**
+     * Dispatches an event
+     *
+     * @param object $event
+     * @return EventInterface
+     */
     public function dispatch(object $event)
     {
         if (!$event instanceof EventInterface) {
@@ -98,12 +174,26 @@ class EventManager implements EventManagerInterface
         return $event->emit();
     }
 
-    public function emit(string $event, array $data): EventInterface
+    /**
+     * emits an event by its name
+     *
+     * @param string $event event name
+     * @param array $data data to pass to the listeners attached to the event
+     * @return EventInterface 
+     */
+    public function emit(string $event, array $data = []): EventInterface
     {
         return $this->getEvent($event)->emit($data);
     }
 
-    protected function resolveEvent(string $eventName) {
+    /**
+     * resolves the event name
+     *
+     * @param string $eventName
+     * @return void
+     */
+    protected function resolveEvent(string $eventName)
+    {
         $dynamic = false;
         if (strpos($eventName, '*') !== false) {
             $dynamic = true;
