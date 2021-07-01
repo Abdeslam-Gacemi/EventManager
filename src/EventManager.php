@@ -11,6 +11,7 @@ use Abdeslam\EventManager\Contracts\EventManagerInterface;
 use Abdeslam\EventManager\Contracts\ListenerInterface;
 use Abdeslam\EventManager\Exceptions\EventNotFoundException;
 use Abdeslam\EventManager\Exceptions\InvalidEventException;
+use Closure;
 
 class EventManager implements EventManagerInterface
 {
@@ -65,7 +66,7 @@ class EventManager implements EventManagerInterface
      * @param ListenerInterface|callable|string $listener
      * @param int $priority
      */
-    public function on(string $eventName, ListenerInterface|callable|string $listener, int $priority = 0)
+    public function on(string $eventName, ListenerInterface|callable|string $listener, int $priority = 0, ?Closure $catcher = null)
     {
         $events = $this->resolveEvent($eventName);
         if (!$events) {
@@ -75,7 +76,7 @@ class EventManager implements EventManagerInterface
          * @var EventInterface[] $events 
         */
         foreach ($events as $event) {
-            $event->addListener($listener, $priority);
+            $event->addListener($listener, $priority, $catcher);
         }
         return $this;
     }

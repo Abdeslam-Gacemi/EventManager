@@ -7,14 +7,14 @@
 namespace Tests;
 
 use PHPUnit\Framework\TestCase;
+use Tests\Fixtures\CustomListener;
 use Abdeslam\EventManager\EventManager;
 use Abdeslam\EventManager\Contracts\EventInterface;
-use Abdeslam\EventManager\Contracts\EventManagerInterface;
 use Abdeslam\EventManager\Exceptions\EventNotFoundException;
 
 class EventManagerTest extends TestCase
 {
-    /** @var EventManagerInterface */
+    /** @var EventManager */
     protected $manager;
 
     const EVENT_NAME = 'post.create';
@@ -44,6 +44,23 @@ class EventManagerTest extends TestCase
         $this->assertNotEmpty($this->manager->getEvents());
         $this->assertCount(1, $this->manager->getEvents());
         $this->assertInstanceOf(EventInterface::class, $this->manager->getEvent(self::EVENT_NAME));
+    }
+
+    /**
+     * @test
+     */
+    public function eventManagerOn()
+    {
+        $this->manager->setLazyLoading(true);
+        $this->manager->on('myEvent', CustomListener::class);
+        $this->assertTrue($this->manager->hasEvent('myEvent'));
+        $event = $this->manager->getEvent('myEvent');
+        $this->assertTrue($event->hasListeners());
+        $this->assertCount(1, $event->getListeners());
+        $this->manager->on('*Event', function (EventInterface $e, $data) {
+            return $e;
+        });
+        $this->assertCount(2, $event->getListeners());
     }
 
     /**
