@@ -3,11 +3,18 @@
          xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.5/phpunit.xsd"
          bootstrap="vendor/autoload.php"
          colors='true'
-         verbose='true'
-         StopOnError='true'>
+         verbose='true'>
     <testsuites>
         <testsuite name="default">
             <directory>tests</directory>
         </testsuite>
     </testsuites>
+    <coverage cacheDirectory=".phpunit.cache/code-coverage" processUncoveredFiles="true">
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+        <!-- <report>
+            <clover outputFile="clover.xml" />
+        </report> -->
+    </coverage>
 </phpunit>

@@ -1,3 +1,4 @@
 /vendor/
 /.phpunit*
 /changelog*
+/composer.lock
