@@ -1,4 +1,5 @@
 [![Test Coverage](https://api.codeclimate.com/v1/badges/5eae028b3cfca10375b2/test_coverage)](https://codeclimate.com/github/Abdeslam-Gacemi/EventManager/test_coverage)
+![example workflow](https://github.com/Abdeslam-Gacemi/EventManager/actions/workflows/php.yml/badge.svg)
 
 # [EventManager](https://github.com/Abdeslam-Gacemi/EventManager.git) Package
 ##
