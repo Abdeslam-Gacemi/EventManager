@@ -22,7 +22,7 @@ trait CatchableListenerTrait
         $this->catcher = $catcher;
     }
 
-    public function getCatcher(): Closure
+    public function getCatcher(): ?Closure
     {
         return $this->catcher;
     }

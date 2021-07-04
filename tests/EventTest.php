@@ -17,6 +17,10 @@ use Abdeslam\EventManager\Contracts\EventInterface;
 use Abdeslam\EventManager\Contracts\EventManagerInterface;
 use Abdeslam\EventManager\Exceptions\InvalidEventException;
 use Abdeslam\EventManager\Exceptions\InvalidListenerException;
+use Exception;
+use PhpParser\Node\Expr\Throw_;
+use Tests\Fixtures\ListenerThrowsException;
+use Throwable;
 
 class EventTest extends TestCase
 {
@@ -314,5 +318,32 @@ class EventTest extends TestCase
         $this->expectException(InvalidListenerException::class);
         $method->invokeArgs($this->event, [InvalidListener::class]);
         $method->setAccessible(false);
+    }
+
+    /**
+     * @test
+     */
+    public function eventAddListenerThrowsException()
+    {
+        $catcher = function (
+                EventInterface $event,
+                Throwable $e
+            ) {
+                echo $e->getMessage();
+                return $event;
+        };
+        $this->event->getManager()->setLazyLoading(true);
+        $this->event->addListener(ListenerThrowsException::class, 0, $catcher);
+        $this->event->addListener(new ListenerThrowsException(), 0, $catcher);
+        $listener = function (EventInterface $event, array $data) {
+            throw new Exception('An exception from a closure listener');
+        };
+        $this->event->addListener($listener, 0, $catcher);
+
+        $this->event->addListener(new ListenerThrowsException(), 0, );
+        $this->event->addListener(ListenerThrowsException::class);
+        $this->expectOutputString('An exception from the listenerAn exception from the listenerAn exception from a closure listener');
+        $this->expectException(Exception::class);
+        $this->event->emit();
     }
 }

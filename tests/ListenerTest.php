@@ -67,6 +67,9 @@ class ListenerTest extends TestCase
         $this->expectOutputString('Hello, world!');
         $this->listener->process($event);
 
+        $listener = new Listener();
+        $this->assertSame($event, $listener->process($event));
+
         $this->listener->setCallback(function (EventInterface $event, $data) {
             // callback does not return the event instance
         });
@@ -82,14 +85,14 @@ class ListenerTest extends TestCase
         $manager = new EventManager();
         $event = new Event($manager, 'post.create');
         $this->listener->catch(function (EventInterface $event, Throwable $e) {
-            $eClass = get_class($e);
-            echo "Exception $eClass caught";
+            echo $e->getMessage();
             return false;
         });
         $this->listener->setCallback(function (EventInterface $event, array $data) {
-            throw new Exception();
+            throw new Exception('Exception from the listener');
         });
-        $this->listener->process($event);
-        $this->expectOutputString('Exception Exception caught');
+        $event->addListener($this->listener);
+        $event->emit();
+        $this->expectOutputString('Exception from the listener');
     }
 }

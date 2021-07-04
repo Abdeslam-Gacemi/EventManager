@@ -71,19 +71,12 @@ class Listener implements ListenerInterface
     public function process(EventInterface $event, array $data = []): EventInterface|bool
     {
         $callback = $this->getCallback();
-        $listenerReturn = null;
         if ($callback !== null) {
-            try {
-                $listenerReturn = call_user_func_array($callback, [$event, $data]);
-            } catch (Throwable $e) {
-                if ($this->getCatcher() !== null) {
-                    $listenerReturn = call_user_func($this->getCatcher(), $event, $e);
-                } else {
-                    throw $e;
-                }
-            }
+            $listenerReturn = call_user_func_array($callback, [$event, $data]);
             if (!$listenerReturn instanceof EventInterface && !is_bool($listenerReturn)) {
                 throw new InvalidListenerException('Listener must return an instance of Abdeslam\EventManager\Contracts\EventInterface or a boolean');
+            } else {
+                return $listenerReturn;
             }
         }
         return $event;

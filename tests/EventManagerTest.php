@@ -10,7 +10,10 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\CustomListener;
 use Abdeslam\EventManager\EventManager;
 use Abdeslam\EventManager\Contracts\EventInterface;
+use Abdeslam\EventManager\Event;
 use Abdeslam\EventManager\Exceptions\EventNotFoundException;
+use Abdeslam\EventManager\Exceptions\InvalidEventException;
+use stdClass;
 
 class EventManagerTest extends TestCase
 {
@@ -33,6 +36,16 @@ class EventManagerTest extends TestCase
     {
         $this->assertEmpty($this->manager->getEvents());
         $this->assertFalse($this->manager->getLazyLoadingStatus());
+
+        $manager = new EventManager(true, ['post.create', 'post.delete']);
+        $this->assertCount(2, $manager->getEvents());
+        $this->assertTrue($manager->hasEvents());
+        $this->assertTrue($manager->hasEvent('post.create'));
+        $this->assertTrue($manager->hasEvent('post.delete'));
+        $this->assertInstanceOf(EventInterface::class, $manager->getEvent('post.create'));
+        $this->assertInstanceOf(EventInterface::class, $manager->getEvent('post.delete'));
+        $this->expectException(InvalidEventException::class);
+        $this->manager->addEvent(['invalid_event']);
     }
 
     /**
@@ -44,6 +57,9 @@ class EventManagerTest extends TestCase
         $this->assertNotEmpty($this->manager->getEvents());
         $this->assertCount(1, $this->manager->getEvents());
         $this->assertInstanceOf(EventInterface::class, $this->manager->getEvent(self::EVENT_NAME));
+        $this->manager->addEvent(new Event($this->manager, 'post.delete'));
+        $this->assertCount(2, $this->manager->getEvents());
+        $this->assertInstanceOf(EventInterface::class, $this->manager->getEvent('post.delete'));
     }
 
     /**
@@ -138,6 +154,8 @@ class EventManagerTest extends TestCase
         });
         $this->expectOutputString('dispatched');
         $this->manager->dispatch($event);
+        $this->expectException(InvalidEventException::class);
+        $this->manager->dispatch(new stdClass());
     }
         
     /**

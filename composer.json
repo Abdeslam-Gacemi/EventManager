@@ -1,7 +1,6 @@
 {
     "name": "abdeslam/event-manager",
     "description": "A powerful event manager that implements psr-14 event-dispatcher, it supports lazy loading, priority dispatching and listener exception handling",
-    "version": "v0.0.1",
     "keywords": ["event", "manager", "dispatcher", "EventManager", "EventDispatcher", "listener", "psr-14"],
     "autoload": {
         "psr-4": {
@@ -25,5 +24,15 @@
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5"
+    },
+    "scripts": {
+        "test-clover": [
+            "@putenv XDEBUG_MODE=coverage",
+            "phpunit --coverage-clover clover.xml"
+        ],
+        "test-html": [
+            "@putenv XDEBUG_MODE=coverage",
+            "phpunit --colors=always --coverage-html .phpunit.cache/code-coverage"
+        ]
     }
 }

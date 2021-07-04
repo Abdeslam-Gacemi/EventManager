@@ -9,6 +9,7 @@ namespace Abdeslam\EventManager;
 use Closure;
 use Throwable;
 use ReflectionClass;
+use Abdeslam\EventManager\Listener;
 use Abdeslam\EventManager\Contracts\EventInterface;
 use Abdeslam\EventManager\Contracts\ListenerInterface;
 use Abdeslam\EventManager\Contracts\EventManagerInterface;
@@ -93,7 +94,7 @@ class Event implements EventInterface
             }
         }
         $listenerType = gettype($listener);
-        throw new InvalidListenerException("Listener must be either an instance of Abdeslam\EventManager\Contracts\ListenerInterface or a valid callable, $listenerType given");
+        throw new InvalidListenerException("Listener must be either a FQCN or an instance of Abdeslam\EventManager\Contracts\ListenerInterface or a valid callable, $listenerType given");
     }
 
     /**
@@ -216,13 +217,7 @@ class Event implements EventInterface
         );
 
         uasort(
-            $listeners, function ($listenerA, $listenerB) {
-                /**
-            * @var ListenerInterface $listenerA 
-            */
-                /**
-            * @var ListenerInterface $listenerB 
-            */
+            $listeners, function (ListenerInterface $listenerA, ListenerInterface $listenerB) {
                 return $listenerB->getPriority() <=> $listenerA->getPriority();
             }
         );
@@ -230,7 +225,16 @@ class Event implements EventInterface
             /** 
             * @var ListenerInterface $listener 
             */
-            $listenerReturnedValue = $listener->process($event, $data);
+            try {
+                $listenerReturnedValue = $listener->process($event, $data);
+            } catch (Throwable $e) {
+                /** @var Listener $listener */
+                if (method_exists($listener, 'getCatcher') && $listener->getCatcher()) {
+                    $listenerReturnedValue = $listener->getCatcher()($event, $e);
+                } else {
+                    throw $e;
+                }
+            }
             if ($event->isPropagationStopped() || $listenerReturnedValue === false) {
                 break;
             }
